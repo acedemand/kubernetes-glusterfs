@@ -1,0 +1,96 @@
+# kubernetes-glusterfs
+Glusterfs installation and Kubernetes StorageClass configuration
+
+Glusterfs Installation Steps
+
+- Create a Ubuntu 16.04 VM.
+
+- Attach a blank disk to VM.
+
+- Run the commands below to install glusterfs on Ubuntu.
+
+```
+sudo apt-get -y update
+sudo apt-get -y install thin-provisioning-tools
+sudo apt-get -y install software-properties-common
+sudo apt-get -y install glusterfs-server 
+sudo service glusterfs-server start
+```
+
+- Run the command below to add disk device. 
+
+```
+sudo fdisk /dev/sdb
+
+n for new partition
+p for primary partition
+1 for partition number
+first and last sectors can be default, just press enter
+w for saving changes
+```
+
+- Run "sudo fdisk -l" and see new /dev/sdb1 device.
+
+
+
+Heketi Installation Steps
+
+- Run the commands below to install heketi on Ubuntu.
+
+```
+wget https://github.com/heketi/heketi/releases/download/v8.0.0/heketi-v8.0.0.linux.amd64.tar.gz
+tar -xvzf heketi-v8.0.0.linux.amd64.tar.gz
+cd heketi
+sudo mv heketi heketi-cli /usr/local/bin
+sudo groupadd -r -g 515 heketi
+sudo useradd -r -c "Heketi user" -d /var/lib/heketi -s /bin/false -m -u 515 -g heketi heketi
+sudo mkdir -p /var/lib/heketi && sudo chown -R heketi:heketi /var/lib/heketi
+sudo mkdir -p /var/log/heketi && sudo chown -R heketi:heketi /var/log/heketi
+sudo mkdir -p /etc/heketi
+```
+
+- Run the commands below to configure root SSH authentication for heketi.
+
+```
+sudo su
+ssh-keygen -f /etc/heketi/heketi_key -t rsa -N ''
+chown heketi:heketi /etc/heketi/heketi_key*
+cat /etc/heketi/heketi_key.pub >> /root/.ssh/authorized_keys
+```
+
+- Switch back to ubuntu user and update heketi config. See heketi/heketi.json file.
+
+- Create a topology json file. See heketi/topology.json file.
+
+- Change glusterfs-server service name to glusterd and start glusterd, heketi with commands below.
+
+```
+sudo mv /etc/init.d/glusterfs-server /etc/init.d/glusterd
+sudo systemctl daemon-reload
+sudo heketi --config=heketi.json
+```
+
+- In another session run:
+
+```
+heketi-cli topology load --json=topology.json
+```
+
+Kubernetes Configuration
+
+- Install glusterfs-client on Kubernetes worker nodes.
+
+```
+sudo apt-get -y install glusterfs-client
+```
+
+- Run the commands below to create storage class and persistentvolumeclaim.
+
+```
+kubectl apply -f kube/storageclass.yml
+kubectl apply -f kube/pvc.yml
+```
+
+- See the example kube/nginx-glusterfs.yml file.
+
+	 
