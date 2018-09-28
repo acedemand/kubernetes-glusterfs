@@ -109,7 +109,7 @@ heketi-cli topology load --json=topology.json
 
 ### CentOS Installation Steps
 
-- Run the commands below to install heketi on Ubuntu.
+- Run the commands below to install heketi on CentOS.
 
 ```
 yum -y install heketi
@@ -137,7 +137,7 @@ cat /etc/heketi/heketi_key.pub >> /root/.ssh/authorized_keys
 heketi-cli topology load --json=topology.json
 ```
 
-### Kubernetes Configuration
+## Kubernetes Configuration
 
 - Install glusterfs-client on Kubernetes worker nodes.
 
